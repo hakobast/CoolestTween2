@@ -17,6 +17,7 @@ Animate Unity UI components such as Image, RectTransform, ScrollRect, Canvas, Ca
 Easing types, you can easly write your own easing function <br />
 Tween types (Looping, PingPong) <br />
 Custom Tweeners, you can write your own tweener type <br />
+No performance impacts since doing object pooling <br />
 
 ## Setup
 
