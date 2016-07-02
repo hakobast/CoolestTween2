@@ -14,6 +14,7 @@ Material value animation <br />
 ## Features
 
 Animate Unity UI components such as Image, RectTransform, ScrollRect, Canvas, CanvasGroup <br />
+Extension methods for creating animation
 Easing types, you can easly write your own easing function <br />
 Tween types (Looping, PingPong) <br />
 Custom Tweeners, you can write your own tweener type <br />
