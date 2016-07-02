@@ -1,30 +1,31 @@
-using Core;
+using UnityEngine;
+using System.Collections.Generic;
 
 namespace CoolestTween {
 
 	public class Tween {
+
+		public delegate void Handler();
 
 		private TweenTime timeProvider;
 		private ITweener tweener;
 		private EaseType easeType;
 		private TweenType tweenType;
 		private IEaseFunction easeFunction;
+		private TweenHandler tweenHandler;
+		private Handler handler;
 		private float duration;
-
-		private int direction;
 		private int count;
+		private bool isPause;
 		private float realTime;
 		private float startTime;
 		private float pauseTime;
 		private float delayTime;
-
-		private bool isPause;
+		private LinkedListNode<Tween> node;
 
 		public bool IsComplete {
 			get{
-				return direction == 1 ?
-				Time >= duration :
-				Time <= 0;
+				return Time >= duration;
 			}
 		}
 
@@ -40,15 +41,29 @@ namespace CoolestTween {
 			}
 		}
 
-		private float Time{
-			get{
-				return direction == 1 ?
-				realTime - (startTime + delayTime + pauseTime) :
-				(startTime + delayTime + pauseTime + duration) - realTime;
+		public LinkedListNode<Tween> Node {
+			get {
+				if(node == null){
+					this.node = new LinkedListNode<Tween>(this);
+				}
+				return node;
 			}
 		}
 
+		private float Time{
+			get{
+				return realTime - (startTime + delayTime + pauseTime);
+			}
+		}
+
+		public Tween(){
+		}
+
 		public Tween(TweenTime timeProvider, TweenBuilder builder){
+			Init(timeProvider, builder);
+		}
+
+		public void Init(TweenTime timeProvider, TweenBuilder builder){
 			this.timeProvider = timeProvider;
 			this.tweener = builder.Tweener;
 			this.easeType = builder.EaseType;
@@ -56,7 +71,10 @@ namespace CoolestTween {
 			this.easeFunction = builder.EaseFunction;
 			this.duration = builder.Duration;
 			this.delayTime = builder.Delay;
-			this.direction = 1;
+			this.handler = builder.Handler;
+			this.startTime = 0;
+			this.realTime = 0;
+			this.pauseTime = 0;
 		}
 
 		public void Start(){
@@ -82,38 +100,56 @@ namespace CoolestTween {
 			}
 
 			if(IsComplete){
-				if(processComplete()){
-					return;
-				}
+				return;
 			}
 
 			realTime = timeProvider.Time;
 			if(!InDelay){
 				tweener.Update(Time);
+				if(IsComplete){
+					processComplete();
+				}
 			}
+		}
+
+		public TweenHandler GetHandler(){
+			if(tweenHandler == null){
+				tweenHandler = new TweenHandler();
+			}
+			tweenHandler.SetTween(this);
+			return tweenHandler;
 		}
 
 		private bool processComplete(){
 			switch(tweenType){
 				case TweenType.Once:{
+					invokeComplete();
 					return true;
 				}
 				case TweenType.Loop:{
 					startTime = timeProvider.Time;
+					pauseTime = 0.0f;
 					delayTime = 0.0f;
 					count++;
 					return false;
 				}
 				case TweenType.PingPong:{
 					startTime = timeProvider.Time;
+					pauseTime = 0.0f;
 					delayTime = 0.0f;
-					direction *= -1;
 					count++;
+					tweener.Swap();
 					return false;
 				}
 				default:{
 					return true;
 				}
+			}
+		}
+
+		private void invokeComplete(){
+			if(handler != null){
+				handler();
 			}
 		}
 	}

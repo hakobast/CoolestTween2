@@ -1,5 +1,3 @@
-using Core;
-
 namespace CoolestTween {
 
 	public class TweenBuilder {
@@ -10,6 +8,7 @@ namespace CoolestTween {
 		private float duration;
 		private float delay;
 		private bool unscaledTime;
+		private Tween.Handler handler;
 
 		public ITweener Tweener {
 			get {
@@ -53,6 +52,12 @@ namespace CoolestTween {
 			}
 		}
 
+		public Tween.Handler Handler{
+			get{
+				return handler;
+			}
+		}
+
 		public TweenBuilder WithDuration(float duration){
 			this.duration = duration;
 			return this;
@@ -85,6 +90,11 @@ namespace CoolestTween {
 
 		public TweenBuilder WithDelay(float delay){
 			this.delay = delay;
+			return this;
+		}
+
+		public TweenBuilder WithHandler(Tween.Handler handler){
+			this.handler = handler;
 			return this;
 		}
 	}

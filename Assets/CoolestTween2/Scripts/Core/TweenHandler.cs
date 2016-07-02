@@ -1,4 +1,5 @@
 namespace CoolestTween {
+
 	public class TweenHandler {
 
 		private Tween tween;
@@ -21,7 +22,14 @@ namespace CoolestTween {
 			}
 		}
 
+		public TweenHandler(){
+		}
+
 		public TweenHandler(Tween tween){
+			SetTween(tween);
+		}
+
+		public void SetTween(Tween tween){
 			this.tween = tween;
 		}
 

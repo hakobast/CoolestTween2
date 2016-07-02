@@ -5,13 +5,16 @@ namespace CoolestTween {
 
 	public class CoolestTween2{
 
+		private const int InitialCacheSize = 100;
+
 		private FrameUpdater frameUpdater;
 		private TweenTime time;
 		private TweenTime unscaledTime;
-		private List<Tween> tweens;
+		private Queue<Tween> cachedTweens;
+		private LinkedList<Tween> tweens;
 
 		private static CoolestTween2 i;
-		public static CoolestTween2 I{
+		private static CoolestTween2 I{
 			get{
 				if(i == null){
 					i = new CoolestTween2();
@@ -21,44 +24,25 @@ namespace CoolestTween {
 			}
 		}
 
+		public static TweenHandler CreateTween(TweenBuilder builder){
+			builder.Tweener.Init(builder);
+			Tween tween = I.getTween(builder);
+			tween.Start();
+			return tween.GetHandler();
+		}
+
 		private CoolestTween2(){
 			time = new UnityTweenTime();
 			unscaledTime = new UnityUnscaledTweenTime();
 			frameUpdater = new UnityFrameUpdater();
-			tweens = new List<Tween>();
+			tweens = new LinkedList<Tween>();
+			cachedTweens = new Queue<Tween>(InitialCacheSize);
+
+			for(int i = 0; i < InitialCacheSize; i++){
+				cachedTweens.Enqueue(new Tween());
+			}
 
 			frameUpdater.SetFrameUpdateEvent(update);
-		}
-
-		public TweenHandler MoveTo(Transform transform, Vector3 dest, TweenBuilder builder) {
-			if(builder.Tweener == null){
-				builder.WithTweener(new TransformPositionTweener(transform, dest));
-			}
-
-			return CreateTween(builder);
-		}
-
-		public TweenHandler MoveToWaypoins(Transform transform, Vector3[] points, TweenBuilder builder) {
-			if(builder.Tweener == null){
-				builder.WithTweener(new TransformPositionWaypointsTweener(transform, points));
-			}
-
-			return CreateTween(builder);
-		}
-
-		public TweenHandler MoveToBezier(Transform transform, Vector3[] points, TweenBuilder builder) {
-			if(builder.Tweener == null){
-				builder.WithTweener(new TransformPositionBezierTweener(transform, points));
-			}
-
-			return CreateTween(builder);
-		}
-
-		public TweenHandler CreateTween(TweenBuilder builder){
-			builder.Tweener.Init(builder);
-			Tween tween = getTween(builder);
-			tween.Start();
-			return new TweenHandler(tween);
 		}
 
 		private Tween getTween(TweenBuilder builder){
@@ -67,20 +51,31 @@ namespace CoolestTween {
 			}
 
 			Tween tween = null;
-			if(builder.UnscaledTime){
-			    tween = new Tween(unscaledTime, builder);
+			if(cachedTweens.Count > 0){
+				tween = cachedTweens.Dequeue();
 			}else{
-				tween = new Tween(time, builder);
+				tween = new Tween();
 			}
 
-			tweens.Add(tween);
-
+			if(builder.UnscaledTime){
+				tween.Init(unscaledTime, builder);
+			}else{
+				tween.Init(time, builder);
+			}
+			tweens.AddLast(tween.Node);
 			return tween;
 		}
 
 		private void update(){
-			for(int i = 0, l = tweens.Count; i < l; i++){
-				tweens[i].Update();
+			var node = tweens.First;
+			while (node != null) {
+				node.Value.Update();
+				var nextNode = node.Next;
+				if (node.Value.IsComplete) {
+					tweens.Remove(node);
+					cachedTweens.Enqueue(node.Value);
+				}
+				node = nextNode;
 			}
 		}
 	}

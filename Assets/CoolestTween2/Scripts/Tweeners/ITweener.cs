@@ -1,7 +1,9 @@
 namespace CoolestTween {
 
-	public interface ITweener {
+	public interface ITweener{
+
 		void Init(TweenBuilder builder);
+		void Swap();
 		void Update(float v);
 	}
 }
